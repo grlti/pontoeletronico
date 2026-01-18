@@ -1,0 +1,8 @@
+⚠️ ATENÇÃO!
+
+Esta ação irá apagar TODOS os dados do sistema:
+- Nome do funcionário
+- Todos os registros de ponto
+- Registro atual em andamento
+
+Deseja realmente limpar todos os dados?

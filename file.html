@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ponto Eletrônico</title>
+    
+    <!-- jsPDF para exportação PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--gray-800);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 30px -10px rgb(0 0 0 / 0.15);
+        }
+
+        .card-header {
+            padding: 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--gray-700);
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .time-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .time-box {
+            text-align: center;
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            border: 2px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .time-box.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-color: var(--success-color);
+            transform: scale(1.02);
+        }
+
+        .time-box p {
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .time-box .time {
+            font-size: 2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--danger-color);
+            border: 2px solid var(--danger-color);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .status-alert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .status-alert.warning {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+        }
+
+        .status-alert.success {
+            background: #d1fae5;
+            border: 1px solid #34d399;
+            color: #065f46;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-color);
+        }
+
+        .stat-card p {
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-card.overtime .value {
+            color: var(--warning-color);
+        }
+
+        .days-count {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--secondary-color), #7c3aed);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .days-count p {
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .days-count .value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .history-item:hover {
+            background: white;
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .history-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .history-date {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .history-times {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        .history-hours {
+            text-align: right;
+        }
+
+        .history-hours .total {
+            font-weight: 700;
+            color: var(--gray-800);
+            font-size: 1.1rem;
+        }
+
+        .history-hours .overtime {
+            font-size: 0.875rem;
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-500);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            opacity: 0.3;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .time-display {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Ícones SVG embutidos */
+        .icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .icon-lg {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏰ Sistema de Ponto Eletrônico</h1>
+            <p>Registre suas horas de trabalho e acompanhe as horas extras</p>
+        </header>
+
+        <div class="grid">
+            <!-- Card de Registro -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Registro de Ponto
+                    </h2>
+                    <p>Registre sua entrada e saída diária</p>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="employeeName">Nome do Funcionário</label>
+                        <input type="text" id="employeeName" placeholder="Digite seu nome completo">
+                    </div>
+
+                    <div class="time-display">
+                        <div class="time-box" id="entryBox">
+                            <p>Entrada</p>
+                            <div class="time" id="entryTime">--:--</div>
+                        </div>
+                        <div class="time-box" id="exitBox">
+                            <p>Saída</p>
+                            <div class="time" id="exitTime">--:--</div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="btnEntry">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14"></path>
+                                <path d="M12 5l7 7-7 7"></path>
+                            </svg>
+                            Entrada
+                        </button>
+                        <button class="btn btn-secondary" id="btnExit" disabled>
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5"></path>
+                                <path d="M12 19l-7-7 7-7"></path>
+                            </svg>
+                            Saída
+                        </button>
+                    </div>
+
+                    <div id="statusAlert"></div>
+                </div>
+            </div>
+
+            <!-- Card de Resumo -->
+            <div class="card">
+                <div class="card-header" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">
+                    <h2>
+                        <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Resumo do Período
+                    </h2>
+                    <p>Suas horas trabalhadas e extras</p>
+                </div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <p>Total de Horas</p>
+                            <div class="value" id="totalHours">0.0h</div>
+                        </div>
+                        <div class="stat-card overtime">
+                            <p>Horas Extras</p>
+                            <div class="value" id="totalOvertime">0.0h</div>
+                        </div>
+                    </div>
+
+                    <div class="days-count">
+                        <p>Total de Dias Registrados</p>
+                        <div class="value" id="totalDays">0 dias</div>
+                    </div>
+
+                    <button class="btn btn-export" id="btnExport">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Gerar Relatório PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="card">
+            <div class="card-header" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                <h2>
+                    <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20"></path>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    Histórico de Registros
+                </h2>
+                <p>Seus últimos registros de ponto</p>
+            </div>
+            <div class="card-body">
+                <div class="history-list" id="historyList">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <p>Nenhum registro encontrado</p>
+                        <p style="font-size: 0.875rem; margin-top: 8px;">Comece registrando seu ponto!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let currentEntry = null;
+        let currentExit = null;
+        let records = [];
+        let isWorking = false;
+
+        // Elementos do DOM
+        const employeeNameInput = document.getElementById('employeeName');
+        const btnEntry = document.getElementById('btnEntry');
+        const btnExit = document.getElementById('btnExit');
+        const btnExport = document.getElementById('btnExport');
+        const entryTimeEl = document.getElementById('entryTime');
+        const exitTimeEl = document.getElementById('exitTime');
+        const entryBox = document.getElementById('entryBox');
+        const exitBox = document.getElementById('exitBox');
+        const statusAlert = document.getElementById('statusAlert');
+        const totalHoursEl = document.getElementById('totalHours');
+        const totalOvertimeEl = document.getElementById('totalOvertime');
+        const totalDaysEl = document.getElementById('totalDays');
+        const historyList = document.getElementById('historyList');
+
+        // Carregar dados do localStorage
+        function loadData() {
+            const savedData = localStorage.getItem('timeClockData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                employeeNameInput.value = data.employeeName || '';
+                records = data.records || [];
+                if (data.currentEntry) {
+                    currentEntry = new Date(data.currentEntry);
+                    isWorking = true;
+                    updateWorkingStatus();
+                }
+                updateDisplay();
+            }
+        }
+
+        // Salvar dados no localStorage
+        function saveData() {
+            const dataToSave = {
+                employeeName: employeeNameInput.value,
+                records: records,
+                currentEntry: currentEntry
+            };
+            localStorage.setItem('timeClockData', JSON.stringify(dataToSave));
+        }
+
+        // Formatadores
+        function formatTime(date) {
+            return date.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('pt-BR');
+        }
+
+        // Registrar entrada
+        function handleEntry() {
+            if (!employeeNameInput.value.trim()) {
+                showStatus('Por favor, insira seu nome antes de registrar o ponto.', 'warning');
+                return;
+            }
+
+            const today = new Date().toDateString();
+            const existingRecord = records.find(r => new Date(r.date).toDateString() === today);
+            
+            if (existingRecord) {
+                showStatus('Você já registrou a entrada hoje!', 'warning');
+                return;
+            }
+
+            currentEntry = new Date();
+            currentExit = null;
+            isWorking = true;
+            
+            updateWorkingStatus();
+            saveData();
+            showStatus('Entrada registrada com sucesso!', 'success');
+        }
+
+        // Registrar saída
+        function handleExit() {
+            if (!currentEntry) {
+                showStatus('Você precisa registrar a entrada primeiro!', 'warning');
+                return;
+            }
+
+            currentExit = new Date();
+            const diffMs = currentExit.getTime() - currentEntry.getTime();
+            const totalHours = diffMs / (1000 * 60 * 60);
+            const overtimeHours = Math.max(0, totalHours - 8);
+
+            const newRecord = {
+                date: currentEntry.toISOString(),
+                entryTime: formatTime(currentEntry),
+                exitTime: formatTime(currentExit),
+                totalHours: totalHours,
+                overtimeHours: overtimeHours
+            };
+
+            // Remover registro do mesmo dia se existir
+            records = records.filter(r => new Date(r.date).toDateString() !== currentEntry.toDateString());
+            records.push(newRecord);
+            
+            // Ordenar por data (mais recente primeiro)
+            records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+            isWorking = false;
+            updateWorkingStatus();
+            updateDisplay();
+            saveData();
+            showStatus(`Saída registrada! Total: ${totalHours.toFixed(2)}h${overtimeHours > 0 ? ` (+${overtimeHours.toFixed(2)}h extra)` : ''}`, 'success');
+        }
+
+        // Atualizar status de trabalho
+        function updateWorkingStatus() {
+            if (isWorking && currentEntry) {
+                entryTimeEl.textContent = formatTime(currentEntry);
+                entryBox.classList.add('active');
+                btnEntry.disabled = true;
+                btnExit.disabled = false;
+                
+                // Atualizar tempo em tempo real
+                updateWorkingTime();
+                setInterval(updateWorkingTime, 1000);
+            } else {
+                btnEntry.disabled = false;
+                btnExit.disabled = true;
+            }
+        }
+
+        // Atualizar tempo de trabalho em tempo real
+        function updateWorkingTime() {
+            if (isWorking && currentEntry) {
+                const now = new Date();
+                const diffMs = now.getTime() - currentEntry.getTime();
+                const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                exitTimeEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Atualizar display
+        function updateDisplay() {
+            // Atualizar tempos
+            if (currentExit) {
+                exitTimeEl.textContent = formatTime(currentExit);
+                exitBox.classList.add('active');
+            }
+
+            // Calcular totais
+            const totalHours = records.reduce((sum, r) => sum + r.totalHours, 0);
+            const totalOvertime = records.reduce((sum, r) => sum + r.overtimeHours, 0);
+            
+            totalHoursEl.textContent = `${totalHours.toFixed(1)}h`;
+            totalOvertimeEl.textContent = `${totalOvertime.toFixed(1)}h`;
+            totalDaysEl.textContent = `${records.length} dias`;
+
+            // Atualizar histórico
+            updateHistory();
+        }
+
+        // Atualizar histórico
+        function updateHistory() {
+            if (records.length === 0) {
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <p>Nenhum registro encontrado</p>
+                        <p style="font-size: 0.875rem; margin-top: 8px;">Comece registrando seu ponto!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            historyList.innerHTML = records.map((record, index) => `
+                <div class="history-item">
+                    <div class="history-item-left">
+                        <div class="status-dot"></div>
+                        <div>
+                            <div class="history-date">${formatDate(new Date(record.date))}</div>
+                            <div class="history-times">
+                                Entrada: ${record.entryTime} | Saída: ${record.exitTime}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-hours">
+                        <div class="total">${record.totalHours.toFixed(2)}h</div>
+                        ${record.overtimeHours > 0 ? `<div class="overtime">+${record.overtimeHours.toFixed(2)}h extra</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Mostrar alerta de status
+        function showStatus(message, type) {
+            const alertClass = type === 'warning' ? 'warning' : 'success';
+            const icon = type === 'warning' ? 
+                '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>' :
+                '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            
+            statusAlert.innerHTML = `
+                <div class="status-alert ${alertClass}">
+                    ${icon}
+                    <span>${message}</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                statusAlert.innerHTML = '';
+            }, 5000);
+        }
+
+        // Exportar para PDF
+        function exportToPDF() {
+            if (records.length === 0) {
+                showStatus('Não há registros para exportar!', 'warning');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Configurações
+            doc.setFont('helvetica');
+            
+            // Título
+            doc.setFontSize(20);
+            doc.text('RELATORIO DE PONTO ELETRONICO', 105, 20, { align: 'center' });
+            
+            // Informações do funcionário
+            doc.setFontSize(12);
+            doc.text(`Funcionario: ${employeeNameInput.value || 'Nao informado'}`, 20, 35);
+            doc.text(`Data de emissao: ${formatDate(new Date())}`, 20, 45);
+            
+            // Cabeçalho da tabela
+            doc.setFontSize(10);
+            doc.text('Data', 20, 60);
+            doc.text('Entrada', 60, 60);
+            doc.text('Saida', 90, 60);
+            doc.text('Total', 120, 60);
+            doc.text('Extra', 150, 60);
+            
+            // Linha separadora
+            doc.line(20, 65, 190, 65);
+            
+            // Registros
+            let yPosition = 75;
+            records.forEach((record) => {
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                doc.text(formatDate(new Date(record.date)), 20, yPosition);
+                doc.text(record.entryTime, 60, yPosition);
+                doc.text(record.exitTime, 90, yPosition);
+                doc.text(`${record.totalHours.toFixed(2)}h`, 120, yPosition);
+                doc.text(`${record.overtimeHours.toFixed(2)}h`, 150, yPosition);
+                
+                yPosition += 10;
+            });
+            
+            // Totais
+            const totalHours = records.reduce((sum, r) => sum + r.totalHours, 0);
+            const totalOvertime = records.reduce((sum, r) => sum + r.overtimeHours, 0);
+            
+            doc.line(20, yPosition + 5, 190, yPosition + 5);
+            yPosition += 15;
+            
+            doc.setFontSize(12);
+            doc.text(`Total de Horas: ${totalHours.toFixed(2)}h`, 20, yPosition);
+            doc.text(`Total de Horas Extras: ${totalOvertime.toFixed(2)}h`, 20, yPosition + 10);
+            
+            // Download
+            const fileName = `ponto_${employeeNameInput.value.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+            doc.save(fileName);
+            
+            showStatus('Relatório PDF gerado com sucesso!', 'success');
+        }
+
+        // Event listeners
+        btnEntry.addEventListener('click', handleEntry);
+        btnExit.addEventListener('click', handleExit);
+        btnExport.addEventListener('click', exportToPDF);
+
+        // Inicialização
+        loadData();
+    </script>
+</body>
+</html>
